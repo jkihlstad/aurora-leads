@@ -88,6 +88,25 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
 
     const supabase = createClient();
 
+    // First ensure profile exists (needed for RLS)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile) {
+      // Profile doesn't exist yet - try to initialize it
+      try {
+        await fetch("/api/profile/init", { method: "POST" });
+      } catch (e) {
+        console.log("Profile init in progress...");
+      }
+      // Return empty leads for now, will refresh after profile is created
+      setLeads([]);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("leads")
       .select("*")
@@ -95,7 +114,11 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
       .order("scraped_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching leads:", error);
+      // Don't log error if it's just "no rows" - that's expected for new users
+      if (error.code !== "PGRST116") {
+        console.error("Error fetching leads:", error);
+      }
+      setLeads([]);
       return;
     }
 
