@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe, STRIPE_PLANS, StripePlanId } from "@/lib/stripe";
+import { getStripe, STRIPE_PLANS, StripePlanId } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import Stripe from "stripe";
 
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       sessionOptions.customer_email = user.email;
     }
 
-    const session = await stripe.checkout.sessions.create(sessionOptions);
+    const session = await getStripe().checkout.sessions.create(sessionOptions);
 
     return NextResponse.json({
       sessionId: session.id,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 interface SubscriptionRecord {
   stripe_subscription_id: string | null;
@@ -32,7 +32,7 @@ export async function DELETE() {
     // Cancel Stripe subscription if exists
     if (subscription?.stripe_subscription_id) {
       try {
-        await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
+        await getStripe().subscriptions.cancel(subscription.stripe_subscription_id);
         console.log(`Cancelled Stripe subscription: ${subscription.stripe_subscription_id}`);
       } catch (stripeError: any) {
         console.error("Error cancelling Stripe subscription:", stripeError);

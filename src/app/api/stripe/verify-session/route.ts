@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe, STRIPE_PLANS } from "@/lib/stripe";
+import { getStripe, STRIPE_PLANS } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 
 interface DbSubscription {
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // Retrieve the checkout session
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    const session = await getStripe().checkout.sessions.retrieve(sessionId, {
       expand: ["subscription", "customer"],
     });
 

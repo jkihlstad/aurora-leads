@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe, STRIPE_PLANS } from "@/lib/stripe";
+import { getStripe, STRIPE_PLANS } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/server";
 import Stripe from "stripe";
 
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    event = getStripe().webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err: any) {
     console.error("Webhook signature verification failed:", err.message);
     return NextResponse.json(
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       }
 
       // Get subscription details from Stripe
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
+      const subscription = await getStripe().subscriptions.retrieve(subscriptionId) as any;
       const priceId = subscription.items.data[0]?.price.id;
 
       // Get payment method details if available
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       let paymentMethodLast4: string | null = null;
 
       if (subscription.default_payment_method) {
-        const paymentMethod = await stripe.paymentMethods.retrieve(
+        const paymentMethod = await getStripe().paymentMethods.retrieve(
           subscription.default_payment_method as string
         );
         if (paymentMethod.card) {
@@ -165,7 +165,7 @@ export async function POST(request: Request) {
 
       // Get updated payment method if available
       if (subscription.default_payment_method) {
-        const paymentMethod = await stripe.paymentMethods.retrieve(
+        const paymentMethod = await getStripe().paymentMethods.retrieve(
           subscription.default_payment_method as string
         );
         if (paymentMethod.card) {
@@ -226,7 +226,7 @@ export async function POST(request: Request) {
       if (!subscriptionId) break;
 
       // Get subscription to determine plan
-      const invoiceSubscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
+      const invoiceSubscription = await getStripe().subscriptions.retrieve(subscriptionId) as any;
       const priceId = invoiceSubscription.items.data[0]?.price.id;
       const plan = getPlanFromPriceId(priceId);
 
