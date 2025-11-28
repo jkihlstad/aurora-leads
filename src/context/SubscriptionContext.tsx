@@ -115,8 +115,44 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       .eq("user_id", user.id)
       .single();
 
-    if (error) {
-      console.error("Error fetching subscription:", error);
+    if (error || !data) {
+      // No subscription found - try to create one via API
+      console.log("No subscription found, initializing...");
+      try {
+        const response = await fetch("/api/profile/init", {
+          method: "POST",
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.subscription) {
+            const subData = result.subscription;
+            setSubscription({
+              currentPlan: subData.plan as PlanType,
+              status: subData.status as SubscriptionData["status"],
+              scrapesUsed: subData.scrapes_used,
+              scrapesLimit: subData.scrapes_limit,
+              billingCycle: subData.billing_cycle as "monthly" | "yearly",
+              currentPeriodEnd: subData.current_period_end,
+              stripeCustomerId: subData.stripe_customer_id || undefined,
+              stripeSubscriptionId: subData.stripe_subscription_id || undefined,
+              cancelAtPeriodEnd: subData.cancel_at_period_end,
+              paymentMethod: subData.payment_method_brand && subData.payment_method_last4
+                ? {
+                    brand: subData.payment_method_brand,
+                    last4: subData.payment_method_last4,
+                  }
+                : null,
+            });
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (initError) {
+        console.error("Error initializing subscription:", initError);
+      }
+
+      // Fallback to default if init fails
       setSubscription(getDefaultSubscription());
     } else if (data) {
       const subData = data as any;
