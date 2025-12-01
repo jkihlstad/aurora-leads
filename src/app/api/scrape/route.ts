@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ApifyClient } from "apify-client";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 // Initialize the ApifyClient with your API token
 const client = new ApifyClient({
@@ -72,14 +72,43 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check subscription limits
-    const { data: subscriptionData, error: subError } = await supabase
+    // Check subscription limits using admin client to bypass RLS
+    const adminSupabase = createAdminClient();
+    let { data: subscriptionData, error: subError } = await adminSupabase
       .from("subscriptions")
       .select("scrapes_used, scrapes_limit, status")
       .eq("user_id", user.id)
       .single();
 
-    if (subError || !subscriptionData) {
+    // If no subscription exists, try to create a free one
+    if (subError?.code === "PGRST116" || !subscriptionData) {
+      console.log("No subscription found, creating free subscription for user:", user.id);
+
+      const { error: createError } = await adminSupabase
+        .from("subscriptions")
+        .insert({
+          user_id: user.id,
+          plan: "free",
+          status: "active",
+          scrapes_limit: 20,
+          scrapes_used: 0,
+        });
+
+      if (!createError) {
+        // Retry with the newly created subscription
+        const { data: newSubData } = await adminSupabase
+          .from("subscriptions")
+          .select("scrapes_used, scrapes_limit, status")
+          .eq("user_id", user.id)
+          .single();
+
+        subscriptionData = newSubData;
+      } else {
+        console.error("Error creating subscription:", createError);
+      }
+    }
+
+    if (!subscriptionData) {
       console.error("Error fetching subscription:", subError);
       return NextResponse.json(
         { error: "Unable to verify subscription. Please try again." },
