@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStripe, STRIPE_PLANS } from "@/lib/stripe";
+import { getStripe, getStripePlan, getStripePriceIds, STRIPE_PLANS } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/server";
 import Stripe from "stripe";
 
@@ -7,8 +7,9 @@ export const runtime = "nodejs";
 
 // Helper to get plan type from Stripe price ID
 function getPlanFromPriceId(priceId: string): "free" | "standard" | "pro" {
-  if (priceId === STRIPE_PLANS.standard.priceId) return "standard";
-  if (priceId === STRIPE_PLANS.pro.priceId) return "pro";
+  const priceIds = getStripePriceIds();
+  if (priceId === priceIds.standard_monthly) return "standard";
+  if (priceId === priceIds.pro_monthly) return "pro";
   return "free";
 }
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStripe, STRIPE_PLANS, StripePlanId } from "@/lib/stripe";
+import { getStripe, getStripePlan, StripePlanId } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import Stripe from "stripe";
 
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { planId } = body;
+    const { planId, promoCode } = body;
 
     if (!planId || !["standard", "pro"].includes(planId)) {
       return NextResponse.json(
@@ -31,12 +31,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const plan = STRIPE_PLANS[planId as StripePlanId];
+    const plan = getStripePlan(planId as "standard" | "pro");
 
-    if (!plan.priceId) {
+    if (!plan.priceId || plan.priceId === "price_standard_monthly" || plan.priceId === "price_pro_monthly") {
+      console.error("No price ID found for plan:", planId, "- check STRIPE_STANDARD_PRICE_ID and STRIPE_PRO_PRICE_ID env vars");
       return NextResponse.json(
-        { error: "This plan does not require payment" },
-        { status: 400 }
+        { error: "Price configuration error. Please contact support." },
+        { status: 500 }
       );
     }
 
@@ -74,7 +75,35 @@ export async function POST(request: Request) {
           planId: planId,
         },
       },
+      // Enable promo codes on checkout page
+      allow_promotion_codes: true,
     };
+
+    // If a promo code was provided, try to apply it
+    if (promoCode && promoCode.trim()) {
+      try {
+        // Look up the promotion code
+        const promotionCodes = await getStripe().promotionCodes.list({
+          code: promoCode.trim(),
+          active: true,
+          limit: 1,
+        });
+
+        if (promotionCodes.data.length > 0) {
+          // Use discounts instead of allow_promotion_codes when we have a specific code
+          sessionOptions.discounts = [
+            {
+              promotion_code: promotionCodes.data[0].id,
+            },
+          ];
+          // Remove allow_promotion_codes since we're using discounts
+          delete sessionOptions.allow_promotion_codes;
+        }
+      } catch (error) {
+        console.error("Error looking up promo code:", error);
+        // Continue without the promo code if lookup fails
+      }
+    }
 
     // If customer already exists in Stripe, use their ID
     if (subscription?.stripe_customer_id) {

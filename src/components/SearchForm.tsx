@@ -24,7 +24,7 @@ export const SearchForm = ({ onStartScrape, isLoading }: SearchFormProps) => {
   const [limit, setLimit] = useState("20");
   const [country, setCountry] = useState("us");
   const [lang, setLang] = useState("en");
-  const [zoom, setZoom] = useState("13");
+  const [zoom, setZoom] = useState("15");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleSubmit = () => {
@@ -78,10 +78,11 @@ export const SearchForm = ({ onStartScrape, isLoading }: SearchFormProps) => {
   ];
 
   const zoomOptions = [
-    { value: "12", label: "12 (wider area)" },
-    { value: "13", label: "13 (recommended)" },
-    { value: "14", label: "14 (medium)" },
-    { value: "15", label: "15 (narrow)" },
+    { value: "12", label: "12 (wider area - city/region)" },
+    { value: "13", label: "13 (medium - district)" },
+    { value: "14", label: "14 (focused - neighborhood)" },
+    { value: "15", label: "15 (precise - exact location)" },
+    { value: "16", label: "16 (very precise - street level)" },
   ];
 
   return (

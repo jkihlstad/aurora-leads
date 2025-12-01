@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStripe, STRIPE_PLANS } from "@/lib/stripe";
+import { getStripe, STRIPE_PLANS, getStripePlan } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 
 interface DbSubscription {

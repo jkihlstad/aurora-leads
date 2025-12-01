@@ -46,6 +46,7 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
 
   const currentPlan = PLANS.find((p) => p.id === subscription.currentPlan);
   const usagePercentage = (subscription.scrapesUsed / subscription.scrapesLimit) * 100;
@@ -56,6 +57,27 @@ export default function SettingsPage() {
       fetchProfile();
     }
   }, [user]);
+
+  // Sync subscription from Stripe on page load
+  useEffect(() => {
+    if (user) {
+      syncSubscriptionFromStripe();
+    }
+  }, [user]);
+
+  const syncSubscriptionFromStripe = async () => {
+    try {
+      console.log("Syncing subscription from Stripe...");
+      const response = await fetch("/api/stripe/sync-subscription", { method: "POST" });
+      const data = await response.json();
+      console.log("Sync result:", data);
+      if (data.success) {
+        await refreshSubscription();
+      }
+    } catch (error) {
+      console.error("Error syncing subscription:", error);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -103,6 +125,9 @@ export default function SettingsPage() {
       const data = await response.json();
 
       if (data.success) {
+        // Sync subscription from Stripe since webhook might not have reached localhost
+        await fetch("/api/stripe/sync-subscription", { method: "POST" });
+
         setNotification({
           type: "success",
           message: "Payment successful! Your plan has been upgraded.",
@@ -149,7 +174,7 @@ export default function SettingsPage() {
       const response = await fetch("/api/stripe/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId: selectedPlan }),
+        body: JSON.stringify({ planId: selectedPlan, promoCode: promoCode.trim() || undefined }),
       });
 
       const data = await response.json();
@@ -846,7 +871,7 @@ export default function SettingsPage() {
               You'll be redirected to Stripe to complete your payment securely.
             </p>
 
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
               <div className="flex justify-between mb-2">
                 <span className="text-gray-600">Plan</span>
                 <span className="font-medium">
@@ -867,6 +892,24 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {/* Promo Code Input */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Promo Code (optional)
+              </label>
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                placeholder="Enter promo code"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm uppercase"
+                disabled={isProcessing}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                You can also enter a promo code on the Stripe checkout page
+              </p>
+            </div>
+
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
               <MdLock className="h-4 w-4" />
               <span>Secure payment powered by Stripe</span>
@@ -874,7 +917,10 @@ export default function SettingsPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => setShowUpgradeModal(false)}
+                onClick={() => {
+                  setShowUpgradeModal(false);
+                  setPromoCode("");
+                }}
                 disabled={isProcessing}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
               >

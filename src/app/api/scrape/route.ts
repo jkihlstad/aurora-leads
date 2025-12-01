@@ -132,20 +132,21 @@ export async function POST(request: Request) {
       zoom = "13",
     } = body;
 
-    // Validate limit (max 500)
-    const validatedLimit = Math.min(Math.max(1, limit), 500);
-
-    // Check if user has enough scrapes remaining
+    // Calculate remaining scrapes
     const remainingScrapes = subscription.scrapes_limit - subscription.scrapes_used;
-    if (remainingScrapes < validatedLimit) {
+
+    // Check if user has any scrapes remaining
+    if (remainingScrapes <= 0) {
       return NextResponse.json(
         {
-          error: `Insufficient scrapes. You have ${remainingScrapes} scrapes remaining. ` +
-                 `Please reduce your limit or upgrade your plan.`
+          error: `You have no scrapes remaining. Please upgrade your plan to continue.`
         },
         { status: 403 }
       );
     }
+
+    // Cap the limit to remaining scrapes and max 500
+    const validatedLimit = Math.min(Math.max(1, limit), 500, remainingScrapes);
 
     // Check if subscription is active
     if (subscription.status !== "active" && subscription.status !== "trialing") {
@@ -170,14 +171,18 @@ export async function POST(request: Request) {
     }
 
     // Prepare Apify Actor input matching the API documentation
-    // All parameters as per: query, location, limit, country, lang, zoom (string)
+    // Combine query with location for more precise results (e.g., "pizza restaurant in Brooklyn, NY")
+    const searchQuery = `${query} in ${location}`;
+
     const actorInput: Record<string, unknown> = {
-      query: query,
+      query: searchQuery,
       location: location,
       limit: validatedLimit,
       country: country,
       lang: lang,
       zoom: String(zoom),
+      // Additional options for more precise location targeting
+      skipClosedPlaces: false,
     };
 
     console.log("Starting Apify scrape with input:", JSON.stringify(actorInput, null, 2));
@@ -197,8 +202,26 @@ export async function POST(request: Request) {
 
     console.log(`Retrieved ${items.length} results`);
 
+    // Cap results to the validated limit (respects subscription)
+    const cappedItems = items.slice(0, validatedLimit);
+    const actualResultCount = cappedItems.length;
+
+    console.log(`Capped to ${actualResultCount} results based on subscription limit`);
+
+    // Update scrapes_used in subscription
+    const { error: updateError } = await adminSupabase
+      .from("subscriptions")
+      .update({
+        scrapes_used: subscription.scrapes_used + actualResultCount
+      })
+      .eq("user_id", user.id);
+
+    if (updateError) {
+      console.error("Error updating scrapes_used:", updateError);
+    }
+
     // Map Google Maps data to our UI's expected format with ALL fields
-    const mappedResults = items.map((item: any, index: number) => {
+    const mappedResults = cappedItems.map((item: any, index: number) => {
       // Extract email from various possible locations
       let email = "N/A";
       if (item.email) {
@@ -289,6 +312,9 @@ export async function POST(request: Request) {
         total: mappedResults.length,
         runId: run.id,
         datasetId: run.defaultDatasetId,
+        scrapesUsed: subscription.scrapes_used + actualResultCount,
+        scrapesLimit: subscription.scrapes_limit,
+        scrapesRemaining: subscription.scrapes_limit - (subscription.scrapes_used + actualResultCount),
       }
     });
   } catch (error: any) {
