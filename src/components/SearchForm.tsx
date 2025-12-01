@@ -85,8 +85,8 @@ export const SearchForm = ({ onStartScrape, isLoading }: SearchFormProps) => {
   ];
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Search & Scrape</h2>
+    <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200 mb-4 md:mb-6">
+      <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">Search & Scrape</h2>
       <div className="flex flex-col gap-4">
         {/* Main Search Input */}
         <Input
@@ -109,7 +109,7 @@ export const SearchForm = ({ onStartScrape, isLoading }: SearchFormProps) => {
         />
 
         {/* Basic Options Row */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           <Select
             label="Max Results"
             options={limitOptions}
@@ -156,7 +156,7 @@ export const SearchForm = ({ onStartScrape, isLoading }: SearchFormProps) => {
 
         {showAdvanced && (
           <div className="pt-4 border-t border-gray-200 mt-2">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               <Select
                 label="Map Zoom Level"
                 options={zoomOptions}

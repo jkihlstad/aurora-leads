@@ -253,38 +253,39 @@ export default function LeadsPage() {
   return (
     <div className="max-w-7xl mx-auto font-sans">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Lead Lists</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Lead Lists</h1>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">
             Showing {filteredAndSortedLeads.length} of {leads.length} leads
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           <button
             onClick={exportToCSV}
             disabled={filteredAndSortedLeads.length === 0}
-            className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm flex-1 sm:flex-initial"
           >
-            <MdFileDownload className="h-5 w-5" />
-            Export CSV
+            <MdFileDownload className="h-4 w-4 md:h-5 md:w-5" />
+            <span className="hidden sm:inline">Export</span> CSV
           </button>
           <button
             onClick={handleClearLeads}
             disabled={leads.length === 0}
-            className="flex items-center gap-2 px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm flex-1 sm:flex-initial"
           >
-            <MdDeleteSweep className="h-5 w-5" />
-            Clear All
+            <MdDeleteSweep className="h-4 w-4 md:h-5 md:w-5" />
+            <span className="hidden sm:inline">Clear All</span>
+            <span className="sm:hidden">Clear</span>
           </button>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4 mb-4 md:mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {/* Search */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2">
             <div className="relative">
               <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
@@ -326,8 +327,105 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {/* Leads Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3 mb-4">
+        {filteredAndSortedLeads.map((lead, index) => (
+          <div
+            key={`mobile-${lead.id}-${index}`}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium text-gray-900 truncate">{lead.name}</h3>
+                  {(lead.verified || lead.is_claimed) && (
+                    <MdVerified className="h-4 w-4 text-blue-600 shrink-0" />
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 truncate">{lead.types?.join(", ") || "No category"}</p>
+              </div>
+              <span
+                className={`ml-2 shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  lead.status === "success"
+                    ? "bg-green-100 text-green-800"
+                    : lead.status === "warning"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {lead.status === "success" ? "Complete" : lead.status === "warning" ? "Partial" : "Missing"}
+              </span>
+            </div>
+
+            <div className="space-y-1.5 text-sm">
+              {(lead.phone_number || lead.phone) && (
+                <div className="flex items-center gap-2">
+                  <MdPhone className="h-4 w-4 text-gray-400 shrink-0" />
+                  <a href={`tel:${lead.phone_number || lead.phone}`} className="text-blue-600 truncate">
+                    {lead.phone_number || lead.phone}
+                  </a>
+                </div>
+              )}
+              {lead.city && (
+                <div className="flex items-center gap-2">
+                  <MdLocationOn className="h-4 w-4 text-gray-400 shrink-0" />
+                  <span className="text-gray-600 truncate">{lead.city}{lead.state ? `, ${lead.state}` : ""}</span>
+                </div>
+              )}
+              {lead.rating && (
+                <div className="flex items-center gap-2">
+                  {renderStars(lead.rating)}
+                  <span className="text-gray-500 text-xs">({lead.review_count || 0} reviews)</span>
+                </div>
+              )}
+              {lead.website && (
+                <a
+                  href={lead.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-primary"
+                >
+                  <MdLanguage className="h-4 w-4 shrink-0" />
+                  <span className="truncate">Visit website</span>
+                </a>
+              )}
+            </div>
+
+            <button
+              onClick={() => toggleRow(lead.id)}
+              className="mt-3 w-full text-center text-sm text-gray-500 hover:text-gray-700 py-2 border-t border-gray-100"
+            >
+              {expandedRows.has(lead.id) ? "Show less" : "Show more details"}
+            </button>
+
+            {expandedRows.has(lead.id) && (
+              <div className="mt-3 pt-3 border-t border-gray-200 space-y-3 text-sm">
+                <div>
+                  <span className="text-gray-500">Email:</span>{" "}
+                  <span className="text-gray-900">{lead.email}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Address:</span>{" "}
+                  <span className="text-gray-900">{lead.full_address || "N/A"}</span>
+                </div>
+                {lead.place_link && (
+                  <a
+                    href={lead.place_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-primary"
+                  >
+                    View on Google Maps
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

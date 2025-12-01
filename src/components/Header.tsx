@@ -3,11 +3,16 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { IoMdNotificationsOutline } from "react-icons/io";
-import { FiSettings, FiLogOut, FiUser } from "react-icons/fi";
+import { FiSettings, FiLogOut, FiUser, FiMenu } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/context/SubscriptionContext";
 
-export const Header = ({ title }: { title: string }) => {
+interface HeaderProps {
+  title: string;
+  onMenuClick: () => void;
+}
+
+export const Header = ({ title, onMenuClick }: HeaderProps) => {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { subscription } = useSubscription();
@@ -48,23 +53,32 @@ export const Header = ({ title }: { title: string }) => {
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between bg-white px-6 border-b border-gray-200 font-sans">
-      <h1 className="text-xl font-semibold text-gray-800">{title}</h1>
-      <div className="flex items-center gap-4">
-        <button className="text-gray-500 hover:text-gray-700 relative">
-          <IoMdNotificationsOutline className="h-6 w-6" />
+    <header className="flex h-14 md:h-16 shrink-0 items-center justify-between bg-white px-4 md:px-6 border-b border-gray-200 font-sans">
+      <div className="flex items-center gap-3">
+        {/* Mobile hamburger menu */}
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden p-2 -ml-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md"
+        >
+          <FiMenu className="h-5 w-5" />
+        </button>
+        <h1 className="text-lg md:text-xl font-semibold text-gray-800">{title}</h1>
+      </div>
+      <div className="flex items-center gap-2 md:gap-4">
+        <button className="text-gray-500 hover:text-gray-700 relative p-2">
+          <IoMdNotificationsOutline className="h-5 w-5 md:h-6 md:w-6" />
         </button>
 
         {user ? (
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center gap-3 pl-4 border-l border-gray-200 hover:bg-gray-50 rounded-lg px-3 py-1.5 transition-colors"
+              className="flex items-center gap-2 md:gap-3 pl-2 md:pl-4 border-l border-gray-200 hover:bg-gray-50 rounded-lg px-2 md:px-3 py-1.5 transition-colors"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-600">
                 {getInitials(user.email)}
               </div>
-              <div className="flex flex-col items-start">
+              <div className="hidden sm:flex flex-col items-start">
                 <span className="text-sm font-medium text-gray-700">
                   {user.email?.split("@")[0]}
                 </span>

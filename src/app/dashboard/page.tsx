@@ -81,24 +81,24 @@ export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto font-sans">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">
             Analytics and insights for your scraped leads
           </p>
         </div>
-        <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <MdRefresh className="h-5 w-5" />
-            Refresh
+        <div className="flex gap-2 sm:gap-3">
+          <button className="flex items-center gap-2 px-3 md:px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+            <MdRefresh className="h-4 w-4 md:h-5 md:w-5" />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
           <Link
             href="/"
-            className="flex items-center gap-2 px-4 py-2 text-white bg-primary-dark rounded-lg hover:bg-gray-900 transition-colors"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 text-white bg-primary-dark rounded-lg hover:bg-gray-900 transition-colors text-sm"
           >
-            <MdSearch className="h-5 w-5" />
-            New Search
+            <MdSearch className="h-4 w-4 md:h-5 md:w-5" />
+            <span className="hidden sm:inline">New Search</span>
           </Link>
         </div>
       </div>
@@ -121,9 +121,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Leads Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Leads</h3>
+          <h3 className="text-base md:text-lg font-semibold text-gray-900">Recent Leads</h3>
           <Link
             href="/leads"
             className="text-sm text-primary hover:text-primary/80 font-medium"
@@ -132,7 +132,34 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3">
+          {leads.slice(0, 5).map((lead) => (
+            <div key={lead.id} className="border border-gray-200 rounded-lg p-3">
+              <div className="flex items-start justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900 truncate">{lead.name}</p>
+                  <p className="text-xs text-gray-500 truncate">{lead.company}</p>
+                </div>
+                <span
+                  className={`ml-2 shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    lead.status === "success"
+                      ? "bg-green-100 text-green-800"
+                      : lead.status === "warning"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {lead.status === "success" ? "Complete" : lead.status === "warning" ? "Partial" : "Missing"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1 truncate">{lead.email}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>

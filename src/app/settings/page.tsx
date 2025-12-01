@@ -344,52 +344,53 @@ export default function SettingsPage() {
       )}
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500 mt-1">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Settings</h1>
+        <p className="text-gray-500 mt-1 text-sm md:text-base">
           Manage your account, billing, and preferences
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
+      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg overflow-x-auto">
         <button
           onClick={() => setActiveTab("billing")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-3 md:px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === "billing"
               ? "bg-white text-gray-900 shadow-sm"
               : "text-gray-600 hover:text-gray-900"
           }`}
         >
-          <span className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 md:gap-2">
             <MdPayment className="h-4 w-4" />
-            Billing & Subscription
+            <span className="hidden sm:inline">Billing &</span> Subscription
           </span>
         </button>
         <button
           onClick={() => setActiveTab("account")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-3 md:px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === "account"
               ? "bg-white text-gray-900 shadow-sm"
               : "text-gray-600 hover:text-gray-900"
           }`}
         >
-          <span className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 md:gap-2">
             <MdPerson className="h-4 w-4" />
             Account
           </span>
         </button>
         <button
           onClick={() => setActiveTab("notifications")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-3 md:px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === "notifications"
               ? "bg-white text-gray-900 shadow-sm"
               : "text-gray-600 hover:text-gray-900"
           }`}
         >
-          <span className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 md:gap-2">
             <MdNotifications className="h-4 w-4" />
-            Notifications
+            <span className="hidden sm:inline">Notifications</span>
+            <span className="sm:hidden">Alerts</span>
           </span>
         </button>
       </div>
@@ -398,12 +399,12 @@ export default function SettingsPage() {
       {activeTab === "billing" && (
         <div className="space-y-6">
           {/* Current Plan & Usage */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Plan</h2>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
+            <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4">Current Plan</h2>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="flex items-center gap-3 md:gap-4">
                 <div
-                  className={`p-3 rounded-lg ${
+                  className={`p-2.5 md:p-3 rounded-lg ${
                     subscription.currentPlan === "pro"
                       ? "bg-purple-100 text-purple-600"
                       : subscription.currentPlan === "standard"
@@ -414,25 +415,25 @@ export default function SettingsPage() {
                   {getPlanIcon(subscription.currentPlan)}
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900">
                     {currentPlan?.name} Plan
                   </h3>
-                  <p className="text-gray-500">
+                  <p className="text-sm md:text-base text-gray-500">
                     {currentPlan?.price === 0
                       ? "Free forever"
                       : `$${currentPlan?.price}/month`}
                   </p>
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 {subscription.stripeCustomerId && (
                   <button
                     onClick={handleManageBilling}
                     disabled={isProcessing}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium disabled:opacity-50 flex-1 sm:flex-initial"
                   >
                     <MdOpenInNew className="h-4 w-4" />
-                    Manage Billing
+                    <span className="hidden sm:inline">Manage</span> Billing
                   </button>
                 )}
                 {subscription.currentPlan !== "pro" && (
@@ -442,9 +443,9 @@ export default function SettingsPage() {
                         subscription.currentPlan === "free" ? "standard" : "pro"
                       )
                     }
-                    className="px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium"
+                    className="px-3 md:px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium flex-1 sm:flex-initial"
                   >
-                    Upgrade Plan
+                    Upgrade
                   </button>
                 )}
               </div>
