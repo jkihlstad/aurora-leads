@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStripe, STRIPE_PLANS, getStripePriceIds } from "@/lib/stripe";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 // Helper to get plan type from Stripe price ID
 function getPlanFromPriceId(priceId: string): "free" | "standard" | "pro" {
@@ -15,7 +15,8 @@ function getPlanFromPriceId(priceId: string): "free" | "standard" | "pro" {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const adminSupabase = createAdminClient() as any;
+    // Use regular client - RLS policies allow users to manage their own data
+    const db = supabase as any;
 
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     }
 
     // Get the user's subscription from database
-    const { data: dbSub } = await adminSupabase
+    const { data: dbSub } = await db
       .from("subscriptions")
       .select("stripe_customer_id, stripe_subscription_id")
       .eq("user_id", user.id)
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
 
     if (subscriptions.data.length === 0) {
       // No active subscription - downgrade to free
-      await adminSupabase
+      await db
         .from("subscriptions")
         .update({
           plan: "free",
@@ -123,7 +124,7 @@ export async function POST(request: Request) {
       updateData.current_period_end = new Date(subscription.current_period_end * 1000).toISOString();
     }
 
-    const { error: updateError } = await adminSupabase
+    const { error: updateError } = await db
       .from("subscriptions")
       .update(updateData)
       .eq("user_id", user.id);

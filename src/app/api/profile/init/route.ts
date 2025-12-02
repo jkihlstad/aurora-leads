@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST() {
   try {
@@ -14,11 +14,8 @@ export async function POST() {
       );
     }
 
-    // Use admin client to bypass RLS
-    const adminSupabase = createAdminClient();
-
-    // Cast to any to bypass strict typing
-    const db = adminSupabase as any;
+    // Use regular client - RLS policies allow users to manage their own data
+    const db = supabase as any;
 
     // Check if profile exists
     const { data: existingProfile } = await db
@@ -28,7 +25,7 @@ export async function POST() {
       .single();
 
     if (!existingProfile) {
-      // Create profile
+      // Create profile - RLS allows users to insert their own profile
       const { error: profileError } = await db.from("profiles").insert({
         id: user.id,
         email: user.email || "",
@@ -48,7 +45,7 @@ export async function POST() {
       .single();
 
     if (!existingSubscription) {
-      // Create free subscription
+      // Create free subscription - RLS allows users to insert their own subscription
       const { data: newSubscription, error: subError } = await db
         .from("subscriptions")
         .insert({

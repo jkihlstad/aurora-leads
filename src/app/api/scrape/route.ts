@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ApifyClient } from "apify-client";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 // Initialize the ApifyClient with your API token
 const client = new ApifyClient({
@@ -72,9 +72,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check subscription limits using admin client to bypass RLS
-    const adminSupabase = createAdminClient();
-    let { data: subscriptionData, error: subError } = await adminSupabase
+    // Check subscription limits - RLS policies allow users to read/write their own data
+    const db = supabase as any;
+    let { data: subscriptionData, error: subError } = await db
       .from("subscriptions")
       .select("scrapes_used, scrapes_limit, status")
       .eq("user_id", user.id)
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     if (subError?.code === "PGRST116" || !subscriptionData) {
       console.log("No subscription found, creating free subscription for user:", user.id);
 
-      const { error: createError } = await adminSupabase
+      const { error: createError } = await db
         .from("subscriptions")
         .insert({
           user_id: user.id,
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
 
       if (!createError) {
         // Retry with the newly created subscription
-        const { data: newSubData } = await adminSupabase
+        const { data: newSubData } = await db
           .from("subscriptions")
           .select("scrapes_used, scrapes_limit, status")
           .eq("user_id", user.id)
@@ -208,8 +208,8 @@ export async function POST(request: Request) {
 
     console.log(`Capped to ${actualResultCount} results based on subscription limit`);
 
-    // Update scrapes_used in subscription
-    const { error: updateError } = await adminSupabase
+    // Update scrapes_used in subscription - RLS allows users to update their own subscription
+    const { error: updateError } = await db
       .from("subscriptions")
       .update({
         scrapes_used: subscription.scrapes_used + actualResultCount
